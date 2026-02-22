@@ -1,0 +1,37 @@
+/* Print styles for PDF export */
+@media print {
+  /* Hide unnecessary elements */
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Optimize page layout */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Make the resume fill the page properly */
+  @page {
+    margin: 0.5in;
+  }
+
+  /* Ensure proper page breaks */
+  .max-w-4xl {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  /* Remove shadows and borders for printing */
+  div {
+    box-shadow: none !important;
+  }
+
+  /* Ensure proper text rendering */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

@@ -9,7 +9,6 @@ function App() {
   // Check if profile exists on load and skip to Step 2 if it does
   const [currentStep, setCurrentStep] = useState(() => {
     if (profile) {
-      console.log('Profile found in localStorage on load, skipping to Step 2 (JobInput)');
       return 2;
     }
     return 0;
@@ -26,7 +25,6 @@ function App() {
 
   // Handle smart resume parser completion
   const handleSmartResumeReady = (enrichedProfile) => {
-    console.log('SmartResumeInput completed, resumeData:', enrichedProfile);
     setProfile(enrichedProfile);
     setShowSmartParser(false);
     setCurrentStep(2); // Skip to Step 2 (JobInput)
@@ -45,7 +43,6 @@ function App() {
     try {
       // Call tailorResumeToJob which analyzes the job and returns detailed match data
       const result = await tailorResumeToJob(profile, jobDescription);
-      console.log('Raw API response:', result);
       setTailoredData(result);
       setCurrentStep(3);
     } catch (err) {
@@ -241,47 +238,20 @@ function App() {
               <div>
                 {/* Merge tailored resume data with original profile to preserve personal info and education */}
                 {(() => {
-                  const finalResume = { 
-                    fullName: profile.fullName, 
-                    email: profile.email, 
-                    phone: profile.phone, 
-                    linkedIn: profile.linkedIn, 
-                    github: profile.github, 
-                    location: profile.location, 
-                    education: [
-                      {
-                        institution: 'Universiti Kuala Lumpur Malaysian Institute of Information Technology (UniKL MIIT)',
-                        degree: 'Bachelor of Information Technology (Hons) in Software Engineering',
-                        startDate: 'March 2024',
-                        graduationDate: 'December 2027',
-                        gpa: '3.62',
-                        highlights: [
-                          'Dean\'s List — October 2024 and October 2025 semesters',
-                          'Relevant Coursework: Software Design, Mobile App Development, Web Technologies',
-                          'Member, Google Developer Student Clubs (GDSC) — UniKL MIIT'
-                        ]
-                      },
-                      {
-                        institution: 'Politeknik Ungku Omar (PUO)',
-                        degree: 'Diploma in Information Technology in Digital Technology',
-                        startDate: 'December 2019',
-                        graduationDate: 'July 2022',
-                        gpa: '3.43',
-                        highlights: [
-                          'Final Year Project: Augmented Reality app for interactive learning using Unity'
-                        ]
-                      }
-                    ],
-                    summary: tailoredData?.resumeData?.summary || tailoredData?.summary || profile.summary, 
-                    workExperiences: tailoredData?.resumeData?.workExperiences || tailoredData?.workExperiences || profile.workExperiences, 
-                    skills: profile.skills, 
-                    projects: tailoredData?.resumeData?.projects || tailoredData?.projects || profile.projects, 
-                    certifications: [
-                      'Google Project Management Professional Certificate (Google, Coursera) — Credential ID: H5Y6MLEYJKLD'
-                    ]
+                  const finalResume = {
+                    fullName: profile.fullName,
+                    email: profile.email,
+                    phone: profile.phone,
+                    linkedIn: profile.linkedIn,
+                    github: profile.github,
+                    location: profile.location,
+                    education: tailoredData?.resumeData?.education || tailoredData?.education || profile.education,
+                    summary: tailoredData?.resumeData?.summary || tailoredData?.summary || profile.summary,
+                    workExperiences: tailoredData?.resumeData?.workExperiences || tailoredData?.workExperiences || profile.workExperiences,
+                    skills: profile.skills,
+                    projects: tailoredData?.resumeData?.projects || tailoredData?.projects || profile.projects,
+                    certifications: profile.certifications || []
                   };
-                  console.log('Final resume object:', finalResume);
-                  
                   return (
                     <>
                       <div className="print:hidden mb-6 max-w-4xl mx-auto">

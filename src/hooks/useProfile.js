@@ -21,7 +21,6 @@ const useProfile = () => {
     try {
       if (profile) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-        console.log('Profile saved to localStorage:', profile);
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }

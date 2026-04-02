@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ResumeTextParser from './ResumeTextParser';
 
 const ProfileForm = ({ onProfileChange, initialData }) => {
@@ -18,11 +18,15 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
     ]
   });
 
-  // Call onProfileChange whenever profileData changes
+  // Debounce profile saves — avoid writing to localStorage on every keystroke
+  const debounceTimer = useRef(null);
   useEffect(() => {
-    if (onProfileChange) {
+    if (!onProfileChange) return;
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
       onProfileChange(profileData);
-    }
+    }, 400);
+    return () => clearTimeout(debounceTimer.current);
   }, [profileData, onProfileChange]);
 
   const handleInputChange = (field, value) => {

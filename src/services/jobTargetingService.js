@@ -102,11 +102,16 @@ Notes:
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `OpenRouter API error: ${response.status} ${response.statusText}. ${
-          errorData.error?.message || JSON.stringify(errorData)
-        }`
-      );
+      const detail = errorData.error?.message;
+      if (response.status === 401) {
+        throw new Error('API key is invalid or missing. Please check your configuration.');
+      } else if (response.status === 429) {
+        throw new Error('Too many requests. Please wait a moment and try again.');
+      } else if (response.status >= 500) {
+        throw new Error('The AI service is temporarily unavailable. Please try again later.');
+      } else {
+        throw new Error(detail || 'Failed to tailor resume. Please try again.');
+      }
     }
 
     const data = await response.json();

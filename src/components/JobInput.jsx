@@ -67,24 +67,19 @@ const JobInput = ({ onSubmit, matchPreview = null }) => {
         {/* Option 2: Job URL */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Option 2: Paste Job URL
+            Option 2: Job URL (reference only)
           </label>
           <input
             type="url"
             value={jobUrl}
             onChange={(e) => setJobUrl(e.target.value)}
             className="w-full h-11 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition mb-2"
-            placeholder="Paste JobStreet or LinkedIn job URL...&#10;https://jobs.jobstreet.com/... or https://linkedin.com/jobs/..."
+            placeholder="https://linkedin.com/jobs/..."
             disabled={isSubmitting}
           />
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6 space-y-2">
-            <p className="text-sm text-blue-900 font-medium">Supported Job URLs:</p>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>✓ JobStreet</li>
-              <li>✓ LinkedIn Jobs</li>
-              <li>✓ Company Career Pages</li>
-            </ul>
-          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Saved for your reference only. Paste the full job description in the text box above.
+          </p>
         </div>
       </div>
 

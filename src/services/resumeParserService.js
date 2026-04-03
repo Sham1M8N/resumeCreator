@@ -1,6 +1,4 @@
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const API_KEY = process.env.REACT_APP_OPENROUTER_API_KEY;
-const MODEL = 'anthropic/claude-sonnet-4-6';
+const PARSE_API_URL = '/api/parse';
 
 /**
  * Parse and analyze resume text using AI
@@ -8,156 +6,23 @@ const MODEL = 'anthropic/claude-sonnet-4-6';
  * @returns {Promise<Object>} Object with parsedResume and followUpQuestions
  */
 export const parseAndAnalyzeResume = async (rawResumeText) => {
-  if (!API_KEY) {
-    throw new Error('OpenRouter API key is not configured. Please set REACT_APP_OPENROUTER_API_KEY in your environment variables.');
-  }
-
   if (!rawResumeText || rawResumeText.trim().length === 0) {
     throw new Error('Resume text is required.');
   }
 
-  // Construct the prompt for Claude
-  const prompt = `You are an expert resume parser and career advisor. Analyze the following resume text and:
-
-1. Parse it into structured JSON with the following fields:
-   - fullName (string)
-   - email (string)
-   - phone (string)
-   - linkedIn (string, full URL if available)
-   - github (string, full URL if available)
-   - location (string, e.g., "City, State" or "City, Country")
-   - summary (string, professional summary or objective)
-   - skills (array of strings)
-   - workExperiences (array of objects with: company, title, startDate, endDate, bulletPoints array)
-   - education (array of objects with: institution, degree, fieldOfStudy, startDate, graduationDate, gpa, highlights array)
-   - projects (array of objects with: name, tech (technologies used), description, githubUrl)
-   - certifications (array of strings)
-
-2. Generate follow-up questions about missing or weak information:
-   - Identify critical missing information (e.g., no contact info, no experience dates)
-   - Suggest improvements (e.g., missing GPA, vague bullets without metrics, no projects/portfolio)
-   - Note any red flags or areas that could be strengthened
-   - Ask about certifications, awards, or volunteer work if not mentioned
-   - Maximum 5-8 most important questions
-
-Important parsing rules for EDUCATION entries (CRITICAL - apply to EVERY education entry):
-- ALWAYS extract GPA if mentioned in any format (3.8, 3.8/4.0, 3.8 GPA, etc.)
-- ALWAYS look for and extract Dean's List mentions, honors, or other academic recognition
-- ALWAYS extract academic achievements as highlights, including:
-  - Dean's List, honors, scholarships, awards
-  - Relevant coursework or specializations mentioned
-  - Academic projects or thesis work mentioned
-  - Academic honors, cum laude, magna cum laude, summa cum laude designations
-- Even if no GPA is explicitly stated, indicate if honors/recognitions were achieved
-- Include ALL academic achievements in the highlights array for each education entry
-- Parse dates into readable format (e.g., "Jan 2020", "2020-2023")
-
-Additional parsing rules:
-- For missing fields, use empty string "" or empty array []
-- Extract bullet points for work experience and education highlights
-- Identify skills from both explicit skills sections and work experience
-- Clean up formatting issues from the raw text
-- If LinkedIn or GitHub URLs don't include https://, add it
-
-Resume Text:
-${rawResumeText}
-
-Return ONLY valid JSON in this exact format:
-{
-  "parsedResume": {
-    "fullName": "",
-    "email": "",
-    "phone": "",
-    "linkedIn": "",
-    "github": "",
-    "location": "",
-    "summary": "",
-    "skills": [],
-    "workExperiences": [
-      {
-        "company": "",
-        "title": "",
-        "startDate": "",
-        "endDate": "",
-        "bulletPoints": []
-      }
-    ],
-    "education": [
-      {
-        "institution": "",
-        "degree": "",
-        "fieldOfStudy": "",
-        "startDate": "",
-        "graduationDate": "",
-        "gpa": "",
-        "highlights": []
-      }
-    ],
-    "projects": [
-      {
-        "name": "",
-        "tech": "",
-        "description": "",
-        "githubUrl": ""
-      }
-    ],
-    "certifications": []
-  },
-  "followUpQuestions": [
-    "Question about missing or unclear information..."
-  ]
-}
-
-Return ONLY the JSON, no additional text or markdown formatting.`;
-
   try {
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(PARSE_API_URL, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Resume Generator - Resume Parser'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 6000
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rawResumeText })
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `OpenRouter API error: ${response.status} ${response.statusText}. ${
-          errorData.error?.message || JSON.stringify(errorData)
-        }`
-      );
+      throw new Error(errorData.error || 'Failed to parse resume. Please try again.');
     }
 
-    const data = await response.json();
-    
-    // Extract the content from OpenAI-compatible response format
-    const content = data.choices?.[0]?.message?.content;
-    
-    if (!content) {
-      throw new Error('No content received from OpenRouter API');
-    }
-
-    // Parse the JSON response from Claude
-    // Remove any potential markdown code blocks if present
-    const cleanedContent = content
-      .replace(/```json\n?/g, '')
-      .replace(/```\n?/g, '')
-      .trim();
-
-    const parsedResponse = JSON.parse(cleanedContent);
+    const parsedResponse = await response.json();
     
     // Validate the response structure
     if (!parsedResponse.parsedResume || !parsedResponse.followUpQuestions) {

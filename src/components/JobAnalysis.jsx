@@ -9,13 +9,6 @@ const JobAnalysis = ({ analysisData }) => {
 
   const { matchScore = 0, matchedKeywords = [], missingKeywords = [], suggestions = [] } = analysisData;
 
-  // Determine score colors
-  const getScoreColor = (score) => {
-    if (score >= 70) return 'green';
-    if (score >= 50) return 'yellow';
-    return 'red';
-  };
-
   const getScoreClasses = (score) => {
     if (score >= 70) return 'bg-green-100 border-green-300 text-green-800';
     if (score >= 50) return 'bg-yellow-100 border-yellow-300 text-yellow-800';

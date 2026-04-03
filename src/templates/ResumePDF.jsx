@@ -193,15 +193,6 @@ const ResumePDFDocument = ({ resumeData }) => {
     return dateString;
   };
 
-  // Hardcoded skills organized by category
-  const hardcodedSkills = {
-    'Programming Languages': ['HTML', 'CSS', 'JavaScript', 'Flutter', 'Dart', 'Python', 'TypeScript', 'Java', 'WordPress'],
-    'Tools & Platforms': ['Unity', 'Canva', 'CapCut', 'toyyibPay', 'SRE Basics'],
-    'Marketing': ['Facebook Ads', 'Instagram Ads', 'Social Media Marketing'],
-    'Hardware & Systems': ['PC Assembly & Troubleshooting', 'OS Installation', 'Driver Management'],
-    'Soft Skills': ['Teamwork', 'Problem-Solving', 'Communication', 'Leadership'],
-    'Languages': ['English', 'Malay']
-  };
 
   // Helper function to check if a field is empty, undefined, or has placeholder value
   const isMissingField = (value) => {
@@ -271,17 +262,14 @@ const ResumePDFDocument = ({ resumeData }) => {
         )}
 
         {/* Skills */}
-        <View>
-          <Text style={styles.sectionHeading}>SKILLS</Text>
-          {Object.entries(hardcodedSkills).map(([category, categorySkills]) => (
-            <View key={category} style={{ marginBottom: 8 }}>
-              <Text style={styles.company}>{category}</Text>
-              <Text style={styles.skillItem}>
-                {categorySkills.join(' • ')}
-              </Text>
-            </View>
-          ))}
-        </View>
+        {skills && skills.length > 0 && (
+          <View>
+            <Text style={styles.sectionHeading}>SKILLS</Text>
+            <Text style={styles.skillItem}>
+              {skills.filter(s => s).join(' • ')}
+            </Text>
+          </View>
+        )}
 
         {/* Education */}
         {education && education.length > 0 && (

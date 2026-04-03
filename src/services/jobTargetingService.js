@@ -68,13 +68,15 @@ Return ONLY valid JSON in this exact format:
   ],
   "matchedKeywords": ["Keywords found in both resume and job description"],
   "missingKeywords": ["Important keywords from job description not found in resume"],
-  "matchScore": 75
+  "matchScore": 75,
+  "suggestions": ["Specific suggestion to improve resume match", "Another actionable suggestion", "Third suggestion"]
 }
 
 Notes:
 - matchScore should be a number from 0-100 indicating how well the resume matches the job (0=poor match, 100=perfect match)
 - matchedKeywords should contain skills/keywords that appear in both the resume and job description
 - missingKeywords should contain 3-5 important keywords from the JD that are NOT in the resume (these represent skill/experience gaps)
+- suggestions should contain 2-3 specific, actionable tips for the candidate to improve their resume match (e.g. "Add experience with Docker to your skills section")
 - Keep all content professional and honest - do not fabricate experience
 - Return ONLY valid JSON, no additional text or markdown formatting`;
 
@@ -133,7 +135,7 @@ Notes:
     const parsedResponse = JSON.parse(cleanedContent);
     
     // Validate required fields
-    const requiredFields = ['summary', 'workExperiences', 'skills', 'education', 'projects', 'matchedKeywords', 'missingKeywords', 'matchScore'];
+    const requiredFields = ['summary', 'workExperiences', 'skills', 'education', 'projects', 'matchedKeywords', 'missingKeywords', 'matchScore', 'suggestions'];
     for (const field of requiredFields) {
       if (!(field in parsedResponse)) {
         throw new Error(`Invalid response structure. Missing required field: ${field}`);
@@ -190,7 +192,10 @@ Notes:
       missingKeywords: Array.isArray(parsedResponse.missingKeywords)
         ? parsedResponse.missingKeywords.filter(k => k)
         : [],
-      matchScore: matchScore
+      matchScore: matchScore,
+      suggestions: Array.isArray(parsedResponse.suggestions)
+        ? parsedResponse.suggestions.filter(s => s)
+        : []
     };
 
     return validatedResponse;

@@ -9,13 +9,17 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
     email: data.email || '',
     phone: data.phone || '',
     linkedIn: data.linkedIn || '',
+    github: data.github || '',
+    location: data.location || '',
+    summary: data.summary || '',
     workExperiences: data.workExperiences || [
       { company: '', title: '', startDate: '', endDate: '', bulletPoints: [''] }
     ],
     skills: data.skills || [''],
     education: data.education || [
       { institution: '', degree: '', fieldOfStudy: '', graduationDate: '' }
-    ]
+    ],
+    projects: data.projects || []
   });
 
   // Debounce profile saves — avoid writing to localStorage on every keystroke
@@ -144,6 +148,27 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
     }));
   };
 
+  // Project Handlers
+  const handleProjectChange = (index, field, value) => {
+    const updatedProjects = [...profileData.projects];
+    updatedProjects[index][field] = value;
+    setProfileData(prev => ({ ...prev, projects: updatedProjects }));
+  };
+
+  const addProject = () => {
+    setProfileData(prev => ({
+      ...prev,
+      projects: [...prev.projects, { name: '', tech: '', description: '', githubUrl: '' }]
+    }));
+  };
+
+  const removeProject = (index) => {
+    setProfileData(prev => ({
+      ...prev,
+      projects: prev.projects.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleParsedData = (parsedData) => {
     // Merge parsed data with existing data
     setProfileData(prev => ({
@@ -151,15 +176,21 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
       email: parsedData.email || prev.email,
       phone: parsedData.phone || prev.phone,
       linkedIn: parsedData.linkedIn || prev.linkedIn,
-      workExperiences: parsedData.workExperiences.length > 0 
-        ? parsedData.workExperiences 
+      github: parsedData.github || prev.github,
+      location: parsedData.location || prev.location,
+      summary: parsedData.summary || prev.summary,
+      workExperiences: parsedData.workExperiences.length > 0
+        ? parsedData.workExperiences
         : prev.workExperiences,
-      skills: parsedData.skills.length > 0 
+      skills: parsedData.skills.length > 0
         ? parsedData.skills 
         : prev.skills,
-      education: parsedData.education.length > 0 
-        ? parsedData.education 
-        : prev.education
+      education: parsedData.education.length > 0
+        ? parsedData.education
+        : prev.education,
+      projects: parsedData.projects && parsedData.projects.length > 0
+        ? parsedData.projects
+        : prev.projects
     }));
     setShowParser(false);
   };
@@ -246,6 +277,45 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
               placeholder="https://linkedin.com/in/johndoe"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              GitHub URL
+            </label>
+            <input
+              type="url"
+              value={profileData.github}
+              onChange={(e) => handleInputChange('github', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="https://github.com/johndoe"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location
+            </label>
+            <input
+              type="text"
+              value={profileData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              placeholder="Kuala Lumpur, Malaysia"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Professional Summary
+          </label>
+          <textarea
+            value={profileData.summary}
+            onChange={(e) => handleInputChange('summary', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+            rows="3"
+            placeholder="Brief summary of your professional background and career goals..."
+          />
         </div>
       </div>
 
@@ -472,6 +542,83 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
                   value={edu.graduationDate}
                   onChange={(e) => handleEducationChange(eduIndex, 'graduationDate', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Projects Section */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4 border-b pb-2">
+          <h3 className="text-xl font-semibold text-gray-700">Projects</h3>
+          <button
+            onClick={addProject}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"
+          >
+            + Add Project
+          </button>
+        </div>
+
+        {profileData.projects.length === 0 && (
+          <p className="text-sm text-gray-500 italic">No projects added yet. Click "+ Add Project" to add one.</p>
+        )}
+
+        {profileData.projects.map((project, projIndex) => (
+          <div key={projIndex} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex justify-between items-start mb-4">
+              <h4 className="text-lg font-medium text-gray-800">Project {projIndex + 1}</h4>
+              <button
+                onClick={() => removeProject(projIndex)}
+                className="text-red-500 hover:text-red-700 text-sm font-medium"
+              >
+                Remove
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Project Name *</label>
+                <input
+                  type="text"
+                  value={project.name}
+                  onChange={(e) => handleProjectChange(projIndex, 'name', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="My Awesome Project"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tech Stack</label>
+                <input
+                  type="text"
+                  value={project.tech}
+                  onChange={(e) => handleProjectChange(projIndex, 'tech', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="React, Node.js, Firebase"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={project.description}
+                  onChange={(e) => handleProjectChange(projIndex, 'description', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                  rows="2"
+                  placeholder="Brief description of what the project does..."
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">GitHub URL</label>
+                <input
+                  type="url"
+                  value={project.githubUrl}
+                  onChange={(e) => handleProjectChange(projIndex, 'githubUrl', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  placeholder="https://github.com/username/project"
                 />
               </div>
             </div>

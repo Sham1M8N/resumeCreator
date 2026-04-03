@@ -96,6 +96,5 @@ export const parseAndAnalyzeResume = async (rawResumeText) => {
   }
 };
 
-export default {
-  parseAndAnalyzeResume
-};
+const resumeParserService = { parseAndAnalyzeResume };
+export default resumeParserService;

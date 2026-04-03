@@ -101,6 +101,5 @@ export const tailorResumeToJob = async (profileData, jobDescription) => {
   }
 };
 
-export default {
-  tailorResumeToJob
-};
+const jobTargetingService = { tailorResumeToJob };
+export default jobTargetingService;

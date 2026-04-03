@@ -35,7 +35,6 @@ const JobAnalysis = ({ analysisData }) => {
     }));
   };
 
-  const scoreColor = getScoreColor(matchScore);
   const scoreClasses = getScoreClasses(matchScore);
 
   return (

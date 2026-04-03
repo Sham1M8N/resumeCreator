@@ -374,9 +374,6 @@ export const ResumePDFDownload = ({ resumeData, disabled = false }) => {
     transition: 'background-color 0.2s',
   };
 
-  const buttonHoverStyles = {
-    backgroundColor: '#059669',
-  };
 
   if (!resumeData || disabled) {
     return (

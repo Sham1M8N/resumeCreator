@@ -1,26 +1,76 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'anthropic/claude-sonnet-4-6';
 
+// Input size limits
+const MAX_JOB_DESCRIPTION_BYTES = 100 * 1024;  // 100KB
+const MAX_PROFILE_DATA_BYTES = 200 * 1024;      // 200KB
+
+// Simple in-memory rate limiter (resets on function cold start)
+const rateLimitMap = new Map();
+const RATE_LIMIT = 10;        // max requests
+const RATE_WINDOW_MS = 60 * 60 * 1000; // per hour
+
+const isRateLimited = (ip) => {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip) || { count: 0, resetAt: now + RATE_WINDOW_MS };
+  if (now > entry.resetAt) {
+    entry.count = 0;
+    entry.resetAt = now + RATE_WINDOW_MS;
+  }
+  entry.count += 1;
+  rateLimitMap.set(ip, entry);
+  return entry.count > RATE_LIMIT;
+};
+
+const securityHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': 'same-origin',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+};
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers: securityHeaders, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+  }
+
+  // Rate limiting
+  const clientIp = event.headers['x-forwarded-for']?.split(',')[0].trim() || 'unknown';
+  if (isRateLimited(clientIp)) {
+    return { statusCode: 429, headers: securityHeaders, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
   }
 
   const API_KEY = process.env.OPENROUTER_API_KEY;
   if (!API_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured on server.' }) };
+    return { statusCode: 500, headers: securityHeaders, body: JSON.stringify({ error: 'Server configuration error.' }) };
+  }
+
+  // Input size check
+  const bodySize = Buffer.byteLength(event.body || '', 'utf8');
+  if (bodySize > MAX_PROFILE_DATA_BYTES + MAX_JOB_DESCRIPTION_BYTES) {
+    return { statusCode: 413, headers: securityHeaders, body: JSON.stringify({ error: 'Request payload too large.' }) };
   }
 
   let body;
   try {
     body = JSON.parse(event.body);
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body.' }) };
+    return { statusCode: 400, headers: securityHeaders, body: JSON.stringify({ error: 'Invalid request body.' }) };
   }
 
   const { profileData, jobDescription } = body;
-  if (!profileData || !jobDescription) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'profileData and jobDescription are required.' }) };
+
+  if (!profileData || typeof profileData !== 'object') {
+    return { statusCode: 400, headers: securityHeaders, body: JSON.stringify({ error: 'profileData must be an object.' }) };
+  }
+  if (!jobDescription || typeof jobDescription !== 'string' || !jobDescription.trim()) {
+    return { statusCode: 400, headers: securityHeaders, body: JSON.stringify({ error: 'jobDescription must be a non-empty string.' }) };
+  }
+  if (Buffer.byteLength(jobDescription, 'utf8') > MAX_JOB_DESCRIPTION_BYTES) {
+    return { statusCode: 413, headers: securityHeaders, body: JSON.stringify({ error: 'Job description is too large.' }) };
+  }
+  if (Buffer.byteLength(JSON.stringify(profileData), 'utf8') > MAX_PROFILE_DATA_BYTES) {
+    return { statusCode: 413, headers: securityHeaders, body: JSON.stringify({ error: 'Profile data is too large.' }) };
   }
 
   const prompt = `You are an expert resume writer and job market analyst. Analyze the following job description and user's profile data. Tailor the resume to best match the job requirements while remaining truthful to the candidate's actual experience.
@@ -101,24 +151,21 @@ Notes:
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const detail = errorData.error?.message;
-      if (response.status === 401) return { statusCode: 401, body: JSON.stringify({ error: 'API key is invalid or missing.' }) };
-      if (response.status === 429) return { statusCode: 429, body: JSON.stringify({ error: 'Too many requests. Please wait and try again.' }) };
-      if (response.status >= 500) return { statusCode: 502, body: JSON.stringify({ error: 'AI service temporarily unavailable.' }) };
-      return { statusCode: response.status, body: JSON.stringify({ error: detail || 'Failed to tailor resume.' }) };
+      if (response.status === 429) return { statusCode: 429, headers: securityHeaders, body: JSON.stringify({ error: 'Too many requests. Please wait and try again.' }) };
+      if (response.status >= 500) return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'AI service temporarily unavailable. Please try again later.' }) };
+      return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'Failed to tailor resume. Please try again.' }) };
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
-    if (!content) return { statusCode: 502, body: JSON.stringify({ error: 'No content received from AI.' }) };
+    if (!content) return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'No content received from AI.' }) };
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: securityHeaders,
       body: content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     };
-  } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+  } catch {
+    return { statusCode: 500, headers: securityHeaders, body: JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }) };
   }
 };

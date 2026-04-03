@@ -1,26 +1,68 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'anthropic/claude-sonnet-4-6';
 
+// Input size limits
+const MAX_RESUME_TEXT_BYTES = 500 * 1024; // 500KB
+
+// Simple in-memory rate limiter (resets on function cold start)
+const rateLimitMap = new Map();
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60 * 60 * 1000; // per hour
+
+const isRateLimited = (ip) => {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip) || { count: 0, resetAt: now + RATE_WINDOW_MS };
+  if (now > entry.resetAt) {
+    entry.count = 0;
+    entry.resetAt = now + RATE_WINDOW_MS;
+  }
+  entry.count += 1;
+  rateLimitMap.set(ip, entry);
+  return entry.count > RATE_LIMIT;
+};
+
+const securityHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': 'same-origin',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+};
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers: securityHeaders, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+  }
+
+  // Rate limiting
+  const clientIp = event.headers['x-forwarded-for']?.split(',')[0].trim() || 'unknown';
+  if (isRateLimited(clientIp)) {
+    return { statusCode: 429, headers: securityHeaders, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
   }
 
   const API_KEY = process.env.OPENROUTER_API_KEY;
   if (!API_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured on server.' }) };
+    return { statusCode: 500, headers: securityHeaders, body: JSON.stringify({ error: 'Server configuration error.' }) };
+  }
+
+  // Input size check
+  const bodySize = Buffer.byteLength(event.body || '', 'utf8');
+  if (bodySize > MAX_RESUME_TEXT_BYTES) {
+    return { statusCode: 413, headers: securityHeaders, body: JSON.stringify({ error: 'Request payload too large.' }) };
   }
 
   let body;
   try {
     body = JSON.parse(event.body);
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body.' }) };
+    return { statusCode: 400, headers: securityHeaders, body: JSON.stringify({ error: 'Invalid request body.' }) };
   }
 
   const { rawResumeText } = body;
-  if (!rawResumeText) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'rawResumeText is required.' }) };
+  if (!rawResumeText || typeof rawResumeText !== 'string' || !rawResumeText.trim()) {
+    return { statusCode: 400, headers: securityHeaders, body: JSON.stringify({ error: 'rawResumeText must be a non-empty string.' }) };
+  }
+  if (Buffer.byteLength(rawResumeText, 'utf8') > MAX_RESUME_TEXT_BYTES) {
+    return { statusCode: 413, headers: securityHeaders, body: JSON.stringify({ error: 'Resume text is too large.' }) };
   }
 
   const prompt = `You are an expert resume parser and career advisor. Analyze the following resume text and:
@@ -95,20 +137,21 @@ Return ONLY the JSON, no additional text or markdown formatting.`;
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return { statusCode: response.status, body: JSON.stringify({ error: errorData.error?.message || 'Failed to parse resume.' }) };
+      if (response.status === 429) return { statusCode: 429, headers: securityHeaders, body: JSON.stringify({ error: 'Too many requests. Please wait and try again.' }) };
+      if (response.status >= 500) return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'AI service temporarily unavailable. Please try again later.' }) };
+      return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'Failed to parse resume. Please try again.' }) };
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
-    if (!content) return { statusCode: 502, body: JSON.stringify({ error: 'No content received from AI.' }) };
+    if (!content) return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'No content received from AI.' }) };
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: securityHeaders,
       body: content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     };
-  } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+  } catch {
+    return { statusCode: 500, headers: securityHeaders, body: JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }) };
   }
 };

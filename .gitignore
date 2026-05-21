@@ -30,5 +30,9 @@ yarn-error.log*
 *.swo
 *~
 
-# Project context (local only, not pushed)
+# Local-only dev artifacts (not project-functional)
 CONTEXT.md
+AUDIT.md
+GITHUB_CHECKLIST.md
+GITHUB_READY.md
+SECURITY_VERDICT.md

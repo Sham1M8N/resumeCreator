@@ -16,14 +16,14 @@ An AI-powered resume tailoring application built with React that helps you optim
 
 - **Frontend**: React 18.3.1 with Tailwind CSS 3.4.19
 - **PDF Generation**: @react-pdf/renderer 4.3.2
-- **AI Integration**: OpenRouter API with Claude Sonnet 4
+- **AI Integration**: OpenRouter API with Claude Sonnet 4.6
 - **Build Tool**: Create React App (react-scripts 5.0.1)
 - **Data Persistence**: Browser localStorage
 - **State Management**: React Hooks (useState, useEffect)
 
 ### Security Status
 - ✅ All production dependencies are secure
-- ⚠️ See [AUDIT.md](AUDIT.md) for npm audit report details
+- ⚠️ Dev dependencies (react-scripts build tools) have known CRA warnings — these are not shipped to production
 
 ## 📋 Prerequisites
 
@@ -56,7 +56,7 @@ npm install
 cp .env.example .env
 
 # Open .env and add your OpenRouter API key
-REACT_APP_OPENROUTER_API_KEY=your_api_key_here
+OPENROUTER_API_KEY=your_api_key_here
 ```
 
 ⚠️ **Security Note**: Never commit `.env` to version control. It's already in `.gitignore`.
@@ -132,7 +132,7 @@ src/
 ### Data Storage
 - **Profiles**: Stored locally in browser localStorage (not sent to any server)
 - **Job Descriptions**: Sent only to OpenRouter for AI analysis
-- **API Key**: Should never leave your local machine (use .env)
+- **API Key**: Stored in Netlify environment variables — never exposed in the React bundle or client-side code
 
 ### Best Practices
 - ✅ `.env` file is in `.gitignore` and won't be committed
@@ -140,12 +140,8 @@ src/
 - ✅ No personal data is logged or tracked
 - ✅ No cookies or analytics
 
-### Before Deploying to Production
-If you deploy this app publicly:
-1. Move API key to backend server (don't expose in React)
-2. Implement backend proxy for OpenRouter calls
-3. Add rate limiting
-4. Consider user authentication if required
+### Production Security (Already Implemented)
+This app is deployed with Netlify Functions as a server-side proxy — the API key never touches the browser. Rate limiting (10 req/hour per IP), input size validation, and security headers are enforced at the function level.
 
 ## 📝 Data Fields
 
@@ -228,19 +224,15 @@ const { parsedResume, followUpQuestions } =
 
 ## 🚀 Deployment
 
-### Deploy to Vercel (Recommended)
-```bash
-npm install -g vercel
-vercel
-# Add REACT_APP_OPENROUTER_API_KEY to environment variables
+### Deploy to Netlify (Recommended)
+This project uses Netlify Functions for the server-side API proxy. Connect your GitHub repo to Netlify and set the following environment variable in the Netlify dashboard:
 ```
+OPENROUTER_API_KEY=your_api_key_here
+```
+Netlify will auto-detect `netlify.toml` and deploy functions alongside the React build.
 
-### Deploy to Netlify
-```bash
-npm run build
-# Upload 'build' folder to Netlify
-# Add REACT_APP_OPENROUTER_API_KEY to environment variables
-```
+### Deploy to Other Platforms
+The Netlify Functions in `netlify/functions/` are platform-specific. To deploy elsewhere (Vercel, Railway, etc.), you'll need to rewrite the functions as that platform's equivalent serverless format and update the `/api/*` redirect in `netlify.toml`.
 
 ## 📚 Learning Resources
 
@@ -265,6 +257,3 @@ This project is open source and available under the MIT License.
 4. **Update Profile**: Use "Build From Scratch" to edit your saved profile
 5. **Start Over**: Click "Start Over" in header to clear everything and begin fresh
 
----
-
-**Version**: 1.0.0 | Built with ❤️ using React and Claude AI

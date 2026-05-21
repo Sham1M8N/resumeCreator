@@ -23,7 +23,7 @@ const isRateLimited = (ip) => {
 
 const securityHeaders = {
   'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': 'same-origin',
+  'Access-Control-Allow-Origin': 'https://resumecreat3.netlify.app',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
 };
@@ -125,7 +125,7 @@ Return ONLY the JSON, no additional text or markdown formatting.`;
       headers: {
         'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://resumecreator.netlify.app',
+        'HTTP-Referer': 'https://resumecreat3.netlify.app',
         'X-Title': 'Resume Creator - Resume Parser'
       },
       body: JSON.stringify({

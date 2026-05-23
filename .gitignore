@@ -30,9 +30,8 @@ yarn-error.log*
 *.swo
 *~
 
-# Local-only dev artifacts (not project-functional)
-CONTEXT.md
-AUDIT.md
-GITHUB_CHECKLIST.md
-GITHUB_READY.md
-SECURITY_VERDICT.md
+# Claude/dev docs — only project .md files are tracked
+*.md
+!README.md
+!CONTRIBUTING.md
+!SECURITY.md

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { ProfileForm, JobInput, ResumePreview, DownloadButton, SmartResumeInput, JobAnalysis } from './components';
+import TemplatePicker from './components/TemplatePicker';
 import { useProfile } from './hooks';
 import { tailorResumeToJob } from './services/jobTargetingService';
+import { saveMatchRecord, getMatchHistory } from './utils/matchHistory';
+import MatchHistoryPanel from './components/MatchHistoryPanel';
 import './App.css';
 
 function App() {
@@ -17,6 +20,8 @@ function App() {
   const [tailoredData, setTailoredData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState('classic');
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Handle profile changes from ProfileForm
   const handleProfileChange = (profileData) => {
@@ -44,6 +49,7 @@ function App() {
       // Call tailorResumeToJob which analyzes the job and returns detailed match data
       const result = await tailorResumeToJob(profile, jobDescription);
       setTailoredData(result);
+      saveMatchRecord(jobDescription, result);
       setCurrentStep(3);
     } catch (err) {
       console.error('Error tailoring resume:', err);
@@ -94,14 +100,27 @@ function App() {
               <h1 className="text-3xl font-bold text-gray-900 hover:text-blue-600 transition-colors">Resume Generator</h1>
               <p className="text-gray-600 mt-1">AI-powered resume tailoring for your dream job</p>
             </div>
-            {currentStep > 0 && (
-              <button
-                onClick={handleStartOver}
-                className="text-sm text-gray-600 hover:text-gray-900 underline"
-              >
-                Start Over
-              </button>
-            )}
+            <div className="flex items-center gap-4">
+              {getMatchHistory().length > 0 && (
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  History
+                </button>
+              )}
+              {currentStep > 0 && (
+                <button
+                  onClick={handleStartOver}
+                  className="text-sm text-gray-600 hover:text-gray-900 underline"
+                >
+                  Start Over
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -250,7 +269,8 @@ function App() {
                     workExperiences: tailoredData?.resumeData?.workExperiences || tailoredData?.workExperiences || profile.workExperiences,
                     skills: profile.skills,
                     projects: tailoredData?.resumeData?.projects || tailoredData?.projects || profile.projects,
-                    certifications: profile.certifications || []
+                    certifications: profile.certifications || [],
+                    profilePicture: profile.profilePicture || null
                   };
                   return (
                     <>
@@ -280,8 +300,10 @@ function App() {
                         }}
                       />
 
-                      <ResumePreview resumeData={finalResume} />
-                      
+                      <TemplatePicker selected={selectedTemplate} onChange={setSelectedTemplate} />
+
+                      <ResumePreview resumeData={finalResume} template={selectedTemplate} />
+
                       <div className="max-w-4xl mx-auto mt-6 print:hidden">
                         <div className="flex justify-between items-center mb-4">
                           <button
@@ -290,7 +312,7 @@ function App() {
                           >
                             ← Try Another Job
                           </button>
-                          <DownloadButton resumeData={finalResume} />
+                          <DownloadButton resumeData={finalResume} template={selectedTemplate} />
                         </div>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
                           <p className="text-sm text-blue-800">
@@ -461,6 +483,8 @@ function App() {
           <p>© 2026 Resume Generator. Powered by AI to help you land your dream job.</p>
         </div>
       </footer>
+
+      <MatchHistoryPanel isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
     </div>
   );
 }

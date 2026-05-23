@@ -1,6 +1,25 @@
 import React from 'react';
 
-const ResumePreview = ({ resumeData }) => {
+const previewThemes = {
+  classic: {
+    header: 'border-b-4 border-blue-600',
+    heading: 'text-2xl font-bold text-blue-600 mb-3 pb-2 border-b-2 border-gray-300',
+    badge: 'px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium',
+  },
+  modern: {
+    header: 'border-b-4 border-blue-700 bg-blue-50 rounded-t-lg',
+    heading: 'text-2xl font-bold text-blue-700 mb-3 pb-2 border-b-2 border-gray-300',
+    badge: 'px-3 py-1 bg-blue-700 text-white rounded text-sm font-medium',
+  },
+  minimal: {
+    header: 'border-b border-gray-300',
+    heading: 'text-gray-900 font-light tracking-widest uppercase text-sm mb-3 pb-2 border-b-2 border-gray-300',
+    badge: 'px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium',
+  },
+};
+
+const ResumePreview = ({ resumeData, template = 'classic' }) => {
+  const theme = previewThemes[template] || previewThemes.classic;
   console.log('ResumePreview received:', resumeData);
 
   if (!resumeData) {
@@ -22,7 +41,16 @@ const ResumePreview = ({ resumeData }) => {
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white shadow-lg rounded-lg">
       {/* Header Section */}
-      <div className="border-b-4 border-blue-600 pb-6 mb-6">
+      <div className={`${theme.header} pb-6 mb-6`}>
+        <div className="flex items-center gap-6">
+          {resumeData.profilePicture && (
+            <img
+              src={resumeData.profilePicture}
+              alt="Profile"
+              className="w-20 h-20 rounded-full object-cover flex-shrink-0"
+            />
+          )}
+          <div className="flex-1">
         <h1 className="text-4xl font-bold text-gray-900 mb-3">
           {fullName || 'Your Name'}
         </h1>
@@ -54,12 +82,14 @@ const ResumePreview = ({ resumeData }) => {
             </div>
           )}
         </div>
+          </div>{/* end flex-1 */}
+        </div>{/* end flex items-center gap-6 */}
       </div>
 
       {/* Professional Summary */}
       {summary && (
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-3 pb-2 border-b-2 border-gray-300">
+          <h2 className={theme.heading}>
             Professional Summary
           </h2>
           <p className="text-gray-700 leading-relaxed">
@@ -71,7 +101,7 @@ const ResumePreview = ({ resumeData }) => {
       {/* Work Experience */}
       {workExperiences && workExperiences.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-3 pb-2 border-b-2 border-gray-300">
+          <h2 className={theme.heading}>
             Work Experience
           </h2>
           <div className="space-y-4">
@@ -112,14 +142,14 @@ const ResumePreview = ({ resumeData }) => {
       {/* Skills */}
       {skills && skills.length > 0 && skills.some(skill => skill) && (
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-3 pb-2 border-b-2 border-gray-300">
+          <h2 className={theme.heading}>
             Skills
           </h2>
           <div className="flex flex-wrap gap-2">
             {skills.filter(skill => skill).map((skill, index) => (
               <span
                 key={index}
-                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                className={theme.badge}
               >
                 {skill}
               </span>
@@ -131,7 +161,7 @@ const ResumePreview = ({ resumeData }) => {
       {/* Education */}
       {education && education.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-3 pb-2 border-b-2 border-gray-300">
+          <h2 className={theme.heading}>
             Education
           </h2>
           <div className="space-y-4">

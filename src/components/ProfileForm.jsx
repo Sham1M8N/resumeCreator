@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ResumeTextParser from './ResumeTextParser';
+import ProfilePictureUpload from './ProfilePictureUpload';
 
 const ProfileForm = ({ onProfileChange, initialData }) => {
   const data = initialData || {};
@@ -19,7 +20,8 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
     education: data.education || [
       { institution: '', degree: '', fieldOfStudy: '', graduationDate: '' }
     ],
-    projects: data.projects || []
+    projects: data.projects || [],
+    profilePicture: data.profilePicture || null
   });
 
   // Debounce profile saves — avoid writing to localStorage on every keystroke
@@ -224,7 +226,14 @@ const ProfileForm = ({ onProfileChange, initialData }) => {
         {/* Personal Information Section */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Personal Information</h3>
-        
+
+        <div className="flex justify-center mb-6">
+          <ProfilePictureUpload
+            value={profileData.profilePicture}
+            onChange={(base64) => setProfileData(prev => ({ ...prev, profilePicture: base64 }))}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -121,8 +121,49 @@ const styles = StyleSheet.create({
   },
 });
 
+// Per-template style overrides (plain JS objects, not StyleSheet)
+const templateConfigs = {
+  classic: {},
+  modern: {
+    sectionHeading: { color: '#2563EB', borderBottomColor: '#2563EB' },
+    name: { fontSize: 22 },
+  },
+  minimal: {
+    page: { lineHeight: 1.4 },
+    sectionHeading: { borderBottomWidth: 0, textTransform: 'none', color: '#111' },
+    name: { fontSize: 18 },
+    bulletPoint: { marginLeft: 8 },
+  },
+};
+
 // PDF Document Component
-const ResumePDFDocument = ({ resumeData }) => {
+const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
+  const cfg = templateConfigs[template] || {};
+  const s = {
+    page: { ...styles.page, ...(cfg.page || {}) },
+    name: { ...styles.name, ...(cfg.name || {}) },
+    contactInfo: styles.contactInfo,
+    sectionHeading: { ...styles.sectionHeading, ...(cfg.sectionHeading || {}) },
+    summaryText: styles.summaryText,
+    experienceItem: styles.experienceItem,
+    jobTitle: styles.jobTitle,
+    company: styles.company,
+    dates: styles.dates,
+    bulletPoint: { ...styles.bulletPoint, ...(cfg.bulletPoint || {}) },
+    skillsContainer: styles.skillsContainer,
+    skillItem: styles.skillItem,
+    educationItem: styles.educationItem,
+    degree: styles.degree,
+    institution: styles.institution,
+    graduationDate: styles.graduationDate,
+    projectItem: styles.projectItem,
+    projectName: styles.projectName,
+    tech: styles.tech,
+    projectDescription: styles.projectDescription,
+    githubUrl: styles.githubUrl,
+    certificationItem: styles.certificationItem,
+    errorText: styles.errorText,
+  };
   const {
     fullName = '',
     email = '',
@@ -201,26 +242,26 @@ const ResumePDFDocument = ({ resumeData }) => {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={s.page}>
         {/* Contact Information */}
         <View>
           {isMissingField(fullName) ? (
-            <Text style={styles.errorText}>ERROR: Name not found in parsed data</Text>
+            <Text style={s.errorText}>ERROR: Name not found in parsed data</Text>
           ) : (
-            <Text style={styles.name}>{fullName}</Text>
+            <Text style={s.name}>{fullName}</Text>
           )}
-          
+
           <View style={{ marginBottom: 16 }}>
             {isMissingField(email) && (
-              <Text style={styles.errorText}>ERROR: Email not found in parsed data</Text>
+              <Text style={s.errorText}>ERROR: Email not found in parsed data</Text>
             )}
             {isMissingField(phone) && (
-              <Text style={styles.errorText}>ERROR: Phone not found in parsed data</Text>
+              <Text style={s.errorText}>ERROR: Phone not found in parsed data</Text>
             )}
           </View>
-          
+
           {!isMissingField(email) || !isMissingField(phone) || linkedIn || github || location ? (
-            <Text style={styles.contactInfo}>
+            <Text style={s.contactInfo}>
               {[email, phone, linkedIn, github, location].filter(Boolean).join(' | ')}
             </Text>
           ) : null}
@@ -229,27 +270,27 @@ const ResumePDFDocument = ({ resumeData }) => {
         {/* Professional Summary */}
         {summary && (
           <View>
-            <Text style={styles.sectionHeading}>PROFESSIONAL SUMMARY</Text>
-            <Text style={styles.summaryText}>{summary}</Text>
+            <Text style={s.sectionHeading}>PROFESSIONAL SUMMARY</Text>
+            <Text style={s.summaryText}>{summary}</Text>
           </View>
         )}
 
         {/* Work Experience */}
         {workExperiences && workExperiences.length > 0 && (
           <View>
-            <Text style={styles.sectionHeading}>WORK EXPERIENCE</Text>
+            <Text style={s.sectionHeading}>WORK EXPERIENCE</Text>
             {workExperiences.map((exp, index) => (
-              <View key={index} style={styles.experienceItem}>
-                <Text style={styles.jobTitle}>{exp.title || 'Job Title'}</Text>
-                <Text style={styles.company}>{exp.company || 'Company Name'}</Text>
-                <Text style={styles.dates}>
+              <View key={index} style={s.experienceItem}>
+                <Text style={s.jobTitle}>{exp.title || 'Job Title'}</Text>
+                <Text style={s.company}>{exp.company || 'Company Name'}</Text>
+                <Text style={s.dates}>
                   {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
                 </Text>
                 {exp.bulletPoints && exp.bulletPoints.length > 0 && (
                   <View>
                     {exp.bulletPoints.map((bullet, bulletIndex) => (
                       bullet && (
-                        <Text key={bulletIndex} style={styles.bulletPoint}>
+                        <Text key={bulletIndex} style={s.bulletPoint}>
                           • {bullet}
                         </Text>
                       )
@@ -264,9 +305,9 @@ const ResumePDFDocument = ({ resumeData }) => {
         {/* Skills */}
         {skills && skills.length > 0 && (
           <View>
-            <Text style={styles.sectionHeading}>SKILLS</Text>
-            <Text style={styles.skillItem}>
-              {skills.filter(s => s).join(' • ')}
+            <Text style={s.sectionHeading}>SKILLS</Text>
+            <Text style={s.skillItem}>
+              {skills.filter(sk => sk).join(' • ')}
             </Text>
           </View>
         )}
@@ -274,26 +315,26 @@ const ResumePDFDocument = ({ resumeData }) => {
         {/* Education */}
         {education && education.length > 0 && (
           <View>
-            <Text style={styles.sectionHeading}>EDUCATION</Text>
+            <Text style={s.sectionHeading}>EDUCATION</Text>
             {education.map((edu, index) => (
-              <View key={index} style={styles.educationItem}>
-                <Text style={styles.degree}>
+              <View key={index} style={s.educationItem}>
+                <Text style={s.degree}>
                   {edu.degree} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}
                 </Text>
-                <Text style={styles.institution}>{edu.institution}</Text>
+                <Text style={s.institution}>{edu.institution}</Text>
                 {edu.startDate && edu.graduationDate && (
-                  <Text style={styles.dates}>
+                  <Text style={s.dates}>
                     {formatDate(edu.startDate)} - {formatDate(edu.graduationDate)}
                   </Text>
                 )}
                 {edu.gpa && (
-                  <Text style={styles.institution}>GPA: {edu.gpa}</Text>
+                  <Text style={s.institution}>GPA: {edu.gpa}</Text>
                 )}
                 {edu.highlights && edu.highlights.length > 0 && (
                   <View>
                     {edu.highlights.map((highlight, highlightIndex) => (
                       highlight && (
-                        <Text key={highlightIndex} style={styles.bulletPoint}>
+                        <Text key={highlightIndex} style={s.bulletPoint}>
                           • {highlight}
                         </Text>
                       )
@@ -308,22 +349,22 @@ const ResumePDFDocument = ({ resumeData }) => {
         {/* Projects */}
         {projects && projects.length > 0 && (
           <View>
-            <Text style={styles.sectionHeading}>PROJECTS</Text>
+            <Text style={s.sectionHeading}>PROJECTS</Text>
             {projects.map((project, index) => (
-              <View key={index} style={styles.projectItem}>
-                <Text style={styles.projectName}>{project.name || 'Project Name'}</Text>
+              <View key={index} style={s.projectItem}>
+                <Text style={s.projectName}>{project.name || 'Project Name'}</Text>
                 {project.tech && (
-                  <Text style={styles.tech}>
+                  <Text style={s.tech}>
                     Tech Stack: {project.tech}
                   </Text>
                 )}
                 {project.description && (
-                  <Text style={styles.projectDescription}>
+                  <Text style={s.projectDescription}>
                     {project.description}
                   </Text>
                 )}
                 {project.githubUrl && (
-                  <Text style={styles.githubUrl}>
+                  <Text style={s.githubUrl}>
                     GitHub: {project.githubUrl}
                   </Text>
                 )}
@@ -335,10 +376,10 @@ const ResumePDFDocument = ({ resumeData }) => {
         {/* Certifications */}
         {certifications && certifications.length > 0 && certifications.some(cert => cert) && (
           <View>
-            <Text style={styles.sectionHeading}>CERTIFICATIONS</Text>
-            <View style={styles.skillsContainer}>
+            <Text style={s.sectionHeading}>CERTIFICATIONS</Text>
+            <View style={s.skillsContainer}>
               {certifications.filter(cert => cert).map((cert, index) => (
-                <Text key={index} style={styles.certificationItem}>
+                <Text key={index} style={s.certificationItem}>
                   • {cert}
                 </Text>
               ))}
@@ -351,8 +392,8 @@ const ResumePDFDocument = ({ resumeData }) => {
 };
 
 // Export the download component with styled button
-export const ResumePDFDownload = ({ resumeData, disabled = false }) => {
-  const fileName = resumeData?.fullName 
+export const ResumePDFDownload = ({ resumeData, template = 'classic', disabled = false }) => {
+  const fileName = resumeData?.fullName
     ? `${resumeData.fullName.replace(/\s+/g, '_')}_Resume.pdf`
     : 'Resume.pdf';
 
@@ -385,7 +426,7 @@ export const ResumePDFDownload = ({ resumeData, disabled = false }) => {
 
   return (
     <PDFDownloadLink
-      document={<ResumePDFDocument resumeData={resumeData} />}
+      document={<ResumePDFDocument resumeData={resumeData} template={template} />}
       fileName={fileName}
       style={buttonStyles}
     >

@@ -5,6 +5,7 @@ import { useProfile } from './hooks';
 import { tailorResumeToJob } from './services/jobTargetingService';
 import { saveMatchRecord, getMatchHistory } from './utils/matchHistory';
 import MatchHistoryPanel from './components/MatchHistoryPanel';
+import CoverLetterModal from './components/CoverLetterModal';
 import './App.css';
 
 function App() {
@@ -22,6 +23,8 @@ function App() {
   const [error, setError] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState('classic');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
+  const [lastJobDescription, setLastJobDescription] = useState('');
 
   // Handle profile changes from ProfileForm
   const handleProfileChange = (profileData) => {
@@ -42,6 +45,7 @@ function App() {
       return;
     }
 
+    setLastJobDescription(jobDescription);
     setIsLoading(true);
     setError(null);
 
@@ -312,6 +316,12 @@ function App() {
                           >
                             ← Try Another Job
                           </button>
+                          <button
+                            onClick={() => setCoverLetterOpen(true)}
+                            className="px-6 py-3 rounded-lg font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors"
+                          >
+                            ✉ Cover Letter
+                          </button>
                           <DownloadButton resumeData={finalResume} template={selectedTemplate} />
                         </div>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
@@ -484,6 +494,13 @@ function App() {
         </div>
       </footer>
 
+      <CoverLetterModal
+        isOpen={coverLetterOpen}
+        onClose={() => setCoverLetterOpen(false)}
+        profileData={profile}
+        jobDescription={lastJobDescription}
+        matchedKeywords={tailoredData?.matchedKeywords || []}
+      />
       <MatchHistoryPanel isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
     </div>
   );

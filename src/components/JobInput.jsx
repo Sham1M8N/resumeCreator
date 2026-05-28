@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { getTailoringRemaining, getTailoringUses } from '../utils/tailoringUsage';
 
-const JobInput = ({ onSubmit, matchPreview = null }) => {
+const JobInput = ({ onSubmit, isPaid = false, matchPreview = null }) => {
   const [jobDescription, setJobDescription] = useState('');
   const [jobUrl, setJobUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,6 +108,20 @@ const JobInput = ({ onSubmit, matchPreview = null }) => {
           Please paste a job description or URL to continue
         </p>
       )}
+
+      {(() => {
+        const remaining = getTailoringRemaining(isPaid);
+        const max = isPaid ? 20 : 3;
+        return remaining > 0 ? (
+          <p className="text-xs text-gray-400 text-center mt-2">
+            {remaining} of {max} {isPaid ? 'Pro' : 'free'} tailorings remaining
+          </p>
+        ) : (
+          <p className="text-xs text-red-500 text-center mt-2">
+            No tailorings remaining
+          </p>
+        );
+      })()}
 
       {/* Match Preview Section */}
       {matchPreview && (

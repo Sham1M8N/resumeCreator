@@ -4,7 +4,9 @@ import TemplatePicker from './components/TemplatePicker';
 import { useProfile } from './hooks';
 import { tailorResumeToJob } from './services/jobTargetingService';
 import { saveMatchRecord, getMatchHistory } from './utils/matchHistory';
+import { canTailor, incrementTailoringUses, getTailoringRemaining } from './utils/tailoringUsage';
 import MatchHistoryPanel from './components/MatchHistoryPanel';
+import TailoringLimitModal from './components/TailoringLimitModal';
 import CoverLetterModal from './components/CoverLetterModal';
 import ShareResumeButton from './components/ShareResumeButton';
 import { decodeResume } from './utils/shareResume';
@@ -31,6 +33,9 @@ function App() {
   const [sharedResume, setSharedResume] = useState(null);
   const [isPaid, setIsPaid] = useState(getProAccess());
   const [toast, setToast] = useState(null);
+  const [tailoringLimitHit, setTailoringLimitHit] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+  const [pendingJobDescription, setPendingJobDescription] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -89,15 +94,29 @@ function App() {
       return;
     }
 
+    if (!canTailor(isPaid)) {
+      setTailoringLimitHit(true);
+      return;
+    }
+
+    if (tailoredData) {
+      setPendingJobDescription(jobDescription);
+      setConfirmOverwrite(true);
+      return;
+    }
+
+    await executeTailoring(jobDescription);
+  };
+
+  const executeTailoring = async (jobDescription) => {
     setLastJobDescription(jobDescription);
     setIsLoading(true);
     setError(null);
-
     try {
-      // Call tailorResumeToJob which analyzes the job and returns detailed match data
       const result = await tailorResumeToJob(profile, jobDescription);
       setTailoredData(result);
       saveMatchRecord(jobDescription, result);
+      incrementTailoringUses();
       setCurrentStep(3);
     } catch (err) {
       console.error('Error tailoring resume:', err);
@@ -128,6 +147,9 @@ function App() {
     setCurrentStep(0);
     setTailoredData(null);
     setError(null);
+    setTailoringLimitHit(false);
+    setConfirmOverwrite(false);
+    setPendingJobDescription('');
   };
 
   if (sharedResume) {
@@ -331,7 +353,7 @@ function App() {
             {/* Step 2: Job Input */}
             {currentStep === 2 && (
               <div>
-                <JobInput onSubmit={handleJobSubmit} />
+                <JobInput onSubmit={handleJobSubmit} isPaid={isPaid} />
                 <div className="max-w-4xl mx-auto mt-6 flex justify-between">
                   <button
                     onClick={goToPreviousStep}
@@ -612,6 +634,52 @@ function App() {
         matchedKeywords={tailoredData?.matchedKeywords || []}
         isPaid={isPaid}
       />
+      {confirmOverwrite && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-2">
+              Replace existing resume?
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Your current tailored resume will be replaced. This uses 1 of your remaining tailorings ({getTailoringRemaining(isPaid)} left) and cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setConfirmOverwrite(false);
+                  setPendingJobDescription('');
+                }}
+                className="px-4 py-2 text-sm rounded-lg font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setConfirmOverwrite(false);
+                  await executeTailoring(pendingJobDescription);
+                  setPendingJobDescription('');
+                }}
+                className="px-4 py-2 text-sm rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Yes, replace it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <TailoringLimitModal
+        isOpen={tailoringLimitHit}
+        isPaid={isPaid}
+        onClose={() => setTailoringLimitHit(false)}
+        onUpgrade={() => {
+          setTailoringLimitHit(false);
+          createCheckoutSession().catch(() =>
+            setToast({ message: 'Payment failed. Please try again.', type: 'error' })
+          );
+        }}
+      />
+
       <MatchHistoryPanel isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
 
       {toast && (

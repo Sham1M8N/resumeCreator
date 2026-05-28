@@ -60,7 +60,7 @@ const templates = [
 const TemplatePicker = ({ selected, onChange, isPaid }) => {
   useEffect(() => {
     if (!isPaid && selected !== 'classic') onChange('classic');
-  }, [isPaid]);
+  }, [isPaid, selected, onChange]);
 
   return (
     <div className="max-w-4xl mx-auto mb-6 print:hidden">

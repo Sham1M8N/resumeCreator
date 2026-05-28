@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { generateCoverLetter } from '../services/coverLetterService';
+import { createCheckoutSession } from '../services/paymentService';
 
 const COVER_LETTER_KEY = 'resume_cover_letter_uses';
 const MAX_FREE = 3;
@@ -13,21 +14,19 @@ const incrementUse = () => {
   localStorage.setItem(COVER_LETTER_KEY, String(current + 1));
 };
 
-const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matchedKeywords }) => {
+const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matchedKeywords, isPaid }) => {
   const [coverLetter, setCoverLetter] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [usesRemaining, setUsesRemaining] = useState(MAX_FREE);
 
-  // Sync uses remaining whenever panel opens
   useEffect(() => {
     if (isOpen) {
       setUsesRemaining(getUsesRemaining());
     }
   }, [isOpen]);
 
-  // Reset content state whenever panel closes
   useEffect(() => {
     if (!isOpen) {
       setCoverLetter(null);
@@ -78,6 +77,9 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
 
   if (!isOpen) return null;
 
+  const canGenerate = usesRemaining > 0 || isPaid;
+  const totalGenerated = MAX_FREE - usesRemaining;
+
   return (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
@@ -95,13 +97,17 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
           <div>
             <h2 className="text-lg font-bold text-gray-900">Cover Letter</h2>
             <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5 ${
-              usesRemaining > 0
-                ? 'bg-teal-100 text-teal-700'
-                : 'bg-gray-100 text-gray-500'
+              isPaid
+                ? 'bg-purple-100 text-purple-700'
+                : usesRemaining > 0
+                  ? 'bg-teal-100 text-teal-700'
+                  : 'bg-gray-100 text-gray-500'
             }`}>
-              {usesRemaining > 0
-                ? `${usesRemaining} of ${MAX_FREE} free uses remaining`
-                : 'No free uses remaining'}
+              {isPaid
+                ? 'Pro — Unlimited'
+                : usesRemaining > 0
+                  ? `${usesRemaining} of ${MAX_FREE} free uses remaining`
+                  : 'No free uses remaining'}
             </span>
           </div>
           <button
@@ -118,8 +124,8 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
         {/* Content area */}
         <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
 
-          {/* ── Locked state ── */}
-          {usesRemaining <= 0 && coverLetter === null && (
+          {/* ── Locked state (free tier, limit reached) ── */}
+          {usesRemaining <= 0 && !isPaid && coverLetter === null && (
             <div className="flex flex-col items-center justify-center flex-1 px-8 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,12 +135,18 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
               <h3 className="text-base font-semibold text-gray-800 mb-2">
                 You've used your 3 free cover letters.
               </h3>
-              <p className="text-sm text-gray-500">Upgrade coming soon.</p>
+              <p className="text-sm text-gray-500 mb-4">Upgrade to Pro for unlimited cover letters.</p>
+              <button
+                onClick={() => createCheckoutSession()}
+                className="mt-4 px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+              >
+                ⚡ Upgrade to Pro — Unlimited Cover Letters
+              </button>
             </div>
           )}
 
           {/* ── Initial: prompt to generate ── */}
-          {usesRemaining > 0 && coverLetter === null && !isLoading && !error && (
+          {canGenerate && coverLetter === null && !isLoading && !error && (
             <div className="flex flex-col items-center justify-center flex-1 px-8 text-center">
               <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +157,9 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
                 Ready to write your cover letter
               </h3>
               <p className="text-sm text-gray-500 mb-6">
-                Uses 1 of your {usesRemaining} remaining free generation{usesRemaining !== 1 ? 's' : ''}
+                {isPaid
+                  ? 'Unlimited generations with Pro'
+                  : `Uses 1 of your ${usesRemaining} remaining free generation${usesRemaining !== 1 ? 's' : ''}`}
               </p>
               <button
                 onClick={handleGenerate}
@@ -197,9 +211,11 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
                 spellCheck
               />
               <p className="text-xs text-gray-400 mt-2 text-right">
-                {usesRemaining > 0
-                  ? `${usesRemaining} free generation${usesRemaining !== 1 ? 's' : ''} remaining`
-                  : 'No free generations remaining'}
+                {isPaid
+                  ? `${totalGenerated} cover letter${totalGenerated !== 1 ? 's' : ''} generated`
+                  : usesRemaining > 0
+                    ? `${usesRemaining} free generation${usesRemaining !== 1 ? 's' : ''} remaining`
+                    : 'No free generations remaining'}
               </p>
             </div>
           )}
@@ -225,7 +241,7 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
             >
               Download .txt
             </button>
-            {usesRemaining > 0 && (
+            {canGenerate && (
               <button
                 onClick={handleGenerate}
                 className="ml-auto px-4 py-2 text-sm font-semibold rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-colors"

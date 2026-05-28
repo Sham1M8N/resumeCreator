@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const templates = [
   {
@@ -57,31 +57,48 @@ const templates = [
   },
 ];
 
-const TemplatePicker = ({ selected, onChange }) => {
+const TemplatePicker = ({ selected, onChange, isPaid }) => {
+  useEffect(() => {
+    if (!isPaid && selected !== 'classic') onChange('classic');
+  }, [isPaid]);
+
   return (
     <div className="max-w-4xl mx-auto mb-6 print:hidden">
       <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
         Resume Template
       </h3>
       <div className="flex gap-4">
-        {templates.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => onChange(t.id)}
-            className={`flex-1 rounded-lg overflow-hidden border-2 transition-all ${
-              selected === t.id
-                ? 'border-blue-600 shadow-md'
-                : 'border-gray-200 hover:border-gray-400'
-            }`}
-          >
-            <div className="h-24 bg-gray-50">{t.thumbnail}</div>
-            <div className="p-2 text-left">
-              <p className="text-sm font-semibold text-gray-800">{t.label}</p>
-              <p className="text-xs text-gray-500">{t.description}</p>
-            </div>
-          </button>
-        ))}
+        {templates.map((t) => {
+          const locked = !isPaid && t.id !== 'classic';
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                if (!isPaid && t.id !== 'classic') return;
+                onChange(t.id);
+              }}
+              className={`relative flex-1 rounded-lg overflow-hidden border-2 transition-all ${
+                selected === t.id
+                  ? 'border-blue-600 shadow-md'
+                  : 'border-gray-200 hover:border-gray-400'
+              }`}
+            >
+              <div className="h-24 bg-gray-50">{t.thumbnail}</div>
+              <div className="p-2 text-left">
+                <p className="text-sm font-semibold text-gray-800">{t.label}</p>
+                <p className="text-xs text-gray-500">{t.description}</p>
+              </div>
+              {locked && (
+                <div className="absolute inset-0 bg-white/75 rounded-lg flex items-center justify-center">
+                  <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                    ⚡ Pro
+                  </span>
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

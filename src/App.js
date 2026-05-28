@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProfileForm, JobInput, ResumePreview, DownloadButton, SmartResumeInput, JobAnalysis } from './components';
 import TemplatePicker from './components/TemplatePicker';
 import { useProfile } from './hooks';
@@ -6,6 +6,9 @@ import { tailorResumeToJob } from './services/jobTargetingService';
 import { saveMatchRecord, getMatchHistory } from './utils/matchHistory';
 import MatchHistoryPanel from './components/MatchHistoryPanel';
 import CoverLetterModal from './components/CoverLetterModal';
+import ShareResumeButton from './components/ShareResumeButton';
+import { decodeResume } from './utils/shareResume';
+import { getProAccess, setProAccess, verifySession, createCheckoutSession } from './services/paymentService';
 import './App.css';
 
 function App() {
@@ -25,6 +28,47 @@ function App() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
   const [lastJobDescription, setLastJobDescription] = useState('');
+  const [sharedResume, setSharedResume] = useState(null);
+  const [isPaid, setIsPaid] = useState(getProAccess());
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    // Handle shared resume link
+    const encoded = params.get('r');
+    if (encoded) {
+      const decoded = decodeResume(encoded);
+      if (decoded) setSharedResume(decoded);
+      window.history.replaceState({}, '', '/');
+      return;
+    }
+
+    // Handle Stripe payment return
+    const payment = params.get('payment');
+    const sessionId = params.get('session_id');
+    window.history.replaceState({}, '', '/');
+
+    if (payment === 'success' && sessionId) {
+      verifySession(sessionId).then((paid) => {
+        if (paid) {
+          setProAccess();
+          setIsPaid(true);
+          setToast({ message: '🎉 Pro access unlocked!', type: 'success' });
+        } else {
+          setToast({ message: 'Payment verification failed. Contact support.', type: 'error' });
+        }
+      });
+    } else if (payment === 'cancelled') {
+      setToast({ message: 'Payment cancelled.', type: 'info' });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Handle profile changes from ProfileForm
   const handleProfileChange = (profileData) => {
@@ -86,11 +130,54 @@ function App() {
     setError(null);
   };
 
+  if (sharedResume) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4">
+
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Shared Resume
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Viewing a resume shared via Resume Creator
+            </p>
+          </div>
+
+          <ResumePreview resumeData={sharedResume} template="classic" />
+
+          <div className="flex justify-center gap-4 mt-6">
+            <DownloadButton resumeData={sharedResume} template="classic" />
+            <button
+              onClick={() => setSharedResume(null)}
+              className="px-6 py-3 rounded-lg font-semibold text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              Create My Own Resume
+            </button>
+          </div>
+
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-500">
+              Built with{' '}
+              <a
+                href="https://resumecreat3.netlify.app"
+                className="text-blue-600 hover:underline"
+              >
+                Resume Creator
+              </a>
+            </p>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Smart Resume Input Modal */}
       {showSmartParser && (
-        <SmartResumeInput 
+        <SmartResumeInput
           onResumeReady={handleSmartResumeReady}
           onClose={() => setShowSmartParser(false)}
         />
@@ -136,8 +223,8 @@ function App() {
           {/* Step 1 */}
           <div className="flex items-center">
             <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${
-              currentStep >= 1 
-                ? 'bg-blue-500 border-blue-500 text-white' 
+              currentStep >= 1
+                ? 'bg-blue-500 border-blue-500 text-white'
                 : 'bg-white border-gray-300 text-gray-400'
             }`}>
               1
@@ -153,8 +240,8 @@ function App() {
           {/* Step 2 */}
           <div className="flex items-center">
             <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${
-              currentStep >= 2 
-                ? 'bg-blue-500 border-blue-500 text-white' 
+              currentStep >= 2
+                ? 'bg-blue-500 border-blue-500 text-white'
                 : 'bg-white border-gray-300 text-gray-400'
             }`}>
               2
@@ -170,8 +257,8 @@ function App() {
           {/* Step 3 */}
           <div className="flex items-center">
             <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${
-              currentStep >= 3 
-                ? 'bg-blue-500 border-blue-500 text-white' 
+              currentStep >= 3
+                ? 'bg-blue-500 border-blue-500 text-white'
                 : 'bg-white border-gray-300 text-gray-400'
             }`}>
               3
@@ -221,7 +308,7 @@ function App() {
             {/* Step 1: Profile Form */}
             {currentStep === 1 && (
               <div>
-                <ProfileForm 
+                <ProfileForm
                   onProfileChange={handleProfileChange}
                   initialData={profile}
                 />
@@ -230,8 +317,8 @@ function App() {
                     onClick={goToNextStep}
                     disabled={!profile}
                     className={`px-8 py-3 rounded-lg font-semibold text-white transition-colors ${
-                      profile 
-                        ? 'bg-blue-500 hover:bg-blue-600' 
+                      profile
+                        ? 'bg-blue-500 hover:bg-blue-600'
                         : 'bg-gray-300 cursor-not-allowed'
                     }`}
                   >
@@ -295,7 +382,7 @@ function App() {
                       </div>
 
                       {/* Job Analysis Component - Shows match score and keywords */}
-                      <JobAnalysis 
+                      <JobAnalysis
                         analysisData={{
                           matchScore: tailoredData.matchScore,
                           matchedKeywords: tailoredData.matchedKeywords,
@@ -304,7 +391,11 @@ function App() {
                         }}
                       />
 
-                      <TemplatePicker selected={selectedTemplate} onChange={setSelectedTemplate} />
+                      <TemplatePicker
+                        selected={selectedTemplate}
+                        onChange={setSelectedTemplate}
+                        isPaid={isPaid}
+                      />
 
                       <ResumePreview resumeData={finalResume} template={selectedTemplate} />
 
@@ -322,6 +413,15 @@ function App() {
                           >
                             ✉ Cover Letter
                           </button>
+                          <ShareResumeButton finalResume={finalResume} />
+                          {!isPaid && (
+                            <button
+                              onClick={() => createCheckoutSession()}
+                              className="px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+                            >
+                              ⚡ Upgrade to Pro
+                            </button>
+                          )}
                           <DownloadButton resumeData={finalResume} template={selectedTemplate} />
                         </div>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
@@ -500,8 +600,18 @@ function App() {
         profileData={profile}
         jobDescription={lastJobDescription}
         matchedKeywords={tailoredData?.matchedKeywords || []}
+        isPaid={isPaid}
       />
       <MatchHistoryPanel isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
+
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full text-white text-sm font-semibold shadow-lg transition-all ${
+          toast.type === 'success' ? 'bg-green-600' :
+          toast.type === 'error' ? 'bg-red-600' : 'bg-gray-700'
+        }`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

@@ -73,13 +73,18 @@ exports.handler = async (event) => {
       body: params.toString(),
     });
 
+    console.error('Stripe response status:', response.status);
+    const responseText = await response.text();
+    console.error('Stripe response body:', responseText);
+
     if (!response.ok) {
       return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'Payment provider error.' }) };
     }
 
-    const session = await response.json();
-    return { statusCode: 200, headers: securityHeaders, body: JSON.stringify({ url: session.url }) };
-  } catch {
+    const stripeData = JSON.parse(responseText);
+    return { statusCode: 200, headers: securityHeaders, body: JSON.stringify({ url: stripeData.url }) };
+  } catch (err) {
+    console.error('Stripe fetch error:', err.message);
     return { statusCode: 502, headers: securityHeaders, body: JSON.stringify({ error: 'Payment provider error.' }) };
   }
 };

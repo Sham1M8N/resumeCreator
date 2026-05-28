@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getTailoringRemaining, getTailoringUses } from '../utils/tailoringUsage';
+import { getTailoringRemaining } from '../utils/tailoringUsage';
 
 const JobInput = ({ onSubmit, isPaid = false, matchPreview = null }) => {
   const [jobDescription, setJobDescription] = useState('');

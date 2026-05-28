@@ -694,7 +694,7 @@ function App() {
         }}
       />
 
-      <MatchHistoryPanel isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
+      <MatchHistoryPanel isOpen={historyOpen} onClose={() => setHistoryOpen(false)} isPaid={isPaid} />
 
       {toast && (
         <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full text-white text-sm font-semibold shadow-lg transition-all ${

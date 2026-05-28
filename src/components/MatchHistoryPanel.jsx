@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { getMatchHistory, deleteMatchRecord } from '../utils/matchHistory';
+import { useProfile } from '../hooks';
 import ResumePreview from './ResumePreview';
 import DownloadButton from './DownloadButton';
+import JobAnalysis from './JobAnalysis';
+import TemplatePicker from './TemplatePicker';
+import CoverLetterModal from './CoverLetterModal';
+import ShareResumeButton from './ShareResumeButton';
 
 const scoreColors = (score) => {
   if (score >= 70) return 'bg-green-100 border-green-300 text-green-800';
@@ -40,10 +45,13 @@ const KeywordPills = ({ items, colorClass, max = 8 }) => {
   );
 };
 
-const MatchHistoryPanel = ({ isOpen, onClose }) => {
+const MatchHistoryPanel = ({ isOpen, onClose, isPaid }) => {
+  const { profile } = useProfile();
   const [history, setHistory] = useState(() => getMatchHistory());
   const [expandedId, setExpandedId] = useState(null);
   const [viewingResume, setViewingResume] = useState(null);
+  const [viewTemplate, setViewTemplate] = useState('classic');
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
 
   const handleDelete = (id) => {
     const updated = deleteMatchRecord(id);
@@ -61,17 +69,21 @@ const MatchHistoryPanel = ({ isOpen, onClose }) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  // Re-sync from storage whenever panel opens; reset resume overlay on close
+  // Re-sync from storage whenever panel opens; reset overlay state on close
   React.useEffect(() => {
     if (isOpen) {
       setHistory(getMatchHistory());
     } else {
       setViewingResume(null);
+      setViewTemplate('classic');
+      setCoverLetterOpen(false);
     }
   }, [isOpen]);
 
   const handleClose = () => {
     setViewingResume(null);
+    setViewTemplate('classic');
+    setCoverLetterOpen(false);
     onClose();
   };
 
@@ -223,9 +235,9 @@ const MatchHistoryPanel = ({ isOpen, onClose }) => {
         )}
       </div>
       {viewingResume && (
-        <div className="fixed inset-0 z-60 bg-white overflow-y-auto">
-          {/* Sticky header bar */}
-          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm">
+        <div className="fixed inset-0 z-60 bg-gray-50 overflow-y-auto">
+          {/* Sticky header */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm z-10">
             <div>
               <p className="text-sm font-semibold text-gray-900">Tailored Resume</p>
               <p className="text-xs text-gray-400">
@@ -235,28 +247,63 @@ const MatchHistoryPanel = ({ isOpen, onClose }) => {
                 {' · '}Match score: {viewingResume.matchScore}/100
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <DownloadButton resumeData={viewingResume.resumeData} template="classic" />
-              <button
-                onClick={() => setViewingResume(null)}
-                className="text-sm text-gray-500 hover:text-gray-800 font-medium px-3 py-1 rounded border border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                ← Back to History
-              </button>
-            </div>
+            <button
+              onClick={() => setViewingResume(null)}
+              className="text-sm text-gray-500 hover:text-gray-800 font-medium px-3 py-1 rounded border border-gray-200 hover:bg-gray-50 transition-colors"
+            >
+              ← Back to History
+            </button>
           </div>
 
-          {/* Resume preview */}
-          <div className="py-8 px-4">
-            <ResumePreview resumeData={viewingResume.resumeData} template="classic" />
-          </div>
+          <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+            {/* Job Analysis Results */}
+            <JobAnalysis analysisData={{
+              matchScore:      viewingResume.matchScore,
+              matchedKeywords: viewingResume.matchedKeywords,
+              missingKeywords: viewingResume.missingKeywords,
+              suggestions:     viewingResume.suggestions,
+            }} />
 
-          {/* Note about missing photo */}
-          <div className="max-w-4xl mx-auto px-4 pb-8">
+            {/* Template Picker */}
+            <TemplatePicker
+              selected={viewTemplate}
+              onChange={setViewTemplate}
+              isPaid={isPaid}
+            />
+
+            {/* Resume Preview */}
+            <ResumePreview
+              resumeData={viewingResume.resumeData}
+              template={viewTemplate}
+            />
+
+            {/* Photo disclaimer */}
             <p className="text-xs text-gray-400 text-center">
               Profile photo is not stored in history.
             </p>
+
+            {/* Action bar */}
+            <div className="flex flex-wrap justify-end gap-3 pt-2 border-t border-gray-200">
+              <button
+                onClick={() => setCoverLetterOpen(true)}
+                className="px-4 py-2 text-sm rounded-lg font-medium text-white bg-teal-600 hover:bg-teal-700 transition-colors"
+              >
+                ✉ Cover Letter
+              </button>
+              <ShareResumeButton finalResume={viewingResume.resumeData} />
+              <DownloadButton resumeData={viewingResume.resumeData} template={viewTemplate} />
+            </div>
           </div>
+
+          {/* Cover Letter Modal */}
+          <CoverLetterModal
+            isOpen={coverLetterOpen}
+            onClose={() => setCoverLetterOpen(false)}
+            profileData={profile}
+            jobDescription={viewingResume.jobDescription || viewingResume.jobSnippet}
+            matchedKeywords={viewingResume.matchedKeywords || []}
+            isPaid={isPaid}
+          />
         </div>
       )}
     </div>

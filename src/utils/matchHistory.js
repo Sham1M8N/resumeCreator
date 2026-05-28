@@ -18,6 +18,7 @@ export const saveMatchRecord = (jobDescription, tailoredData, resumeData) => {
     id: Date.now().toString(),
     date: new Date().toISOString(),
     jobSnippet: jobDescription.trim().substring(0, 100),
+    jobDescription: jobDescription.trim().substring(0, 5000),
     matchScore: tailoredData.matchScore,
     matchedKeywords: tailoredData.matchedKeywords,
     missingKeywords: tailoredData.missingKeywords,

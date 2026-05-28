@@ -416,7 +416,13 @@ function App() {
                           <ShareResumeButton finalResume={finalResume} />
                           {!isPaid && (
                             <button
-                              onClick={() => createCheckoutSession()}
+                              onClick={async () => {
+                                try {
+                                  await createCheckoutSession();
+                                } catch {
+                                  setToast({ message: 'Payment failed. Please try again.', type: 'error' });
+                                }
+                              }}
                               className="px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-colors"
                             >
                               ⚡ Upgrade to Pro

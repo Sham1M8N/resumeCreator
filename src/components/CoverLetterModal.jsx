@@ -20,6 +20,7 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [usesRemaining, setUsesRemaining] = useState(MAX_FREE);
+  const [checkoutError, setCheckoutError] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -137,11 +138,21 @@ const CoverLetterModal = ({ isOpen, onClose, profileData, jobDescription, matche
               </h3>
               <p className="text-sm text-gray-500 mb-4">Upgrade to Pro for unlimited cover letters.</p>
               <button
-                onClick={() => createCheckoutSession()}
+                onClick={async () => {
+                  setCheckoutError(null);
+                  try {
+                    await createCheckoutSession();
+                  } catch {
+                    setCheckoutError('Payment failed. Please try again.');
+                  }
+                }}
                 className="mt-4 px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-colors"
               >
                 ⚡ Upgrade to Pro — Unlimited Cover Letters
               </button>
+              {checkoutError && (
+                <p className="text-xs text-red-600 mt-2">{checkoutError}</p>
+              )}
             </div>
           )}
 

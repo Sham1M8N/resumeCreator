@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { getMatchHistory, deleteMatchRecord } from '../utils/matchHistory';
+import ResumePreview from './ResumePreview';
+import DownloadButton from './DownloadButton';
 
 const scoreColors = (score) => {
   if (score >= 70) return 'bg-green-100 border-green-300 text-green-800';
@@ -41,6 +43,7 @@ const KeywordPills = ({ items, colorClass, max = 8 }) => {
 const MatchHistoryPanel = ({ isOpen, onClose }) => {
   const [history, setHistory] = useState(() => getMatchHistory());
   const [expandedId, setExpandedId] = useState(null);
+  const [viewingResume, setViewingResume] = useState(null);
 
   const handleDelete = (id) => {
     const updated = deleteMatchRecord(id);
@@ -58,17 +61,26 @@ const MatchHistoryPanel = ({ isOpen, onClose }) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  // Re-sync from storage whenever panel opens
+  // Re-sync from storage whenever panel opens; reset resume overlay on close
   React.useEffect(() => {
-    if (isOpen) setHistory(getMatchHistory());
+    if (isOpen) {
+      setHistory(getMatchHistory());
+    } else {
+      setViewingResume(null);
+    }
   }, [isOpen]);
+
+  const handleClose = () => {
+    setViewingResume(null);
+    onClose();
+  };
 
   return (
     <div className={isOpen ? 'fixed inset-0 z-50' : 'hidden'}>
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
 
@@ -81,7 +93,7 @@ const MatchHistoryPanel = ({ isOpen, onClose }) => {
             <p className="text-xs text-gray-500 mt-0.5">{history.length} record{history.length !== 1 ? 's' : ''}</p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
             aria-label="Close"
           >
@@ -139,13 +151,23 @@ const MatchHistoryPanel = ({ isOpen, onClose }) => {
                     </button>
                   </div>
 
-                  {/* Expand toggle */}
-                  <button
-                    onClick={() => toggleExpand(record.id)}
-                    className="w-full text-left px-3 py-1.5 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-t border-gray-100 transition-colors font-medium"
-                  >
-                    {isExpanded ? 'Hide details ▲' : 'Show details ▼'}
-                  </button>
+                  {/* Expand toggle + View Resume */}
+                  <div className="flex items-center border-t border-gray-100">
+                    <button
+                      onClick={() => toggleExpand(record.id)}
+                      className="flex-1 text-left px-3 py-1.5 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors font-medium"
+                    >
+                      {isExpanded ? 'Hide details ▲' : 'Show details ▼'}
+                    </button>
+                    {record.resumeData && (
+                      <button
+                        onClick={() => setViewingResume(record)}
+                        className="px-3 py-1.5 text-xs text-blue-600 hover:underline font-medium border-l border-gray-100"
+                      >
+                        View Resume
+                      </button>
+                    )}
+                  </div>
 
                   {/* Expanded details */}
                   {isExpanded && (
@@ -200,6 +222,43 @@ const MatchHistoryPanel = ({ isOpen, onClose }) => {
           </div>
         )}
       </div>
+      {viewingResume && (
+        <div className="fixed inset-0 z-60 bg-white overflow-y-auto">
+          {/* Sticky header bar */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Tailored Resume</p>
+              <p className="text-xs text-gray-400">
+                {new Date(viewingResume.date).toLocaleDateString('en-GB', {
+                  day: 'numeric', month: 'short', year: 'numeric',
+                })}
+                {' · '}Match score: {viewingResume.matchScore}/100
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <DownloadButton resumeData={viewingResume.resumeData} template="classic" />
+              <button
+                onClick={() => setViewingResume(null)}
+                className="text-sm text-gray-500 hover:text-gray-800 font-medium px-3 py-1 rounded border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                ← Back to History
+              </button>
+            </div>
+          </div>
+
+          {/* Resume preview */}
+          <div className="py-8 px-4">
+            <ResumePreview resumeData={viewingResume.resumeData} template="classic" />
+          </div>
+
+          {/* Note about missing photo */}
+          <div className="max-w-4xl mx-auto px-4 pb-8">
+            <p className="text-xs text-gray-400 text-center">
+              Profile photo is not stored in history.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

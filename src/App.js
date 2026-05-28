@@ -115,7 +115,21 @@ function App() {
     try {
       const result = await tailorResumeToJob(profile, jobDescription);
       setTailoredData(result);
-      saveMatchRecord(jobDescription, result);
+      const mergedResume = {
+        fullName:        profile.fullName,
+        email:           profile.email,
+        phone:           profile.phone,
+        linkedIn:        profile.linkedIn,
+        github:          profile.github,
+        location:        profile.location,
+        summary:         result.resumeData?.summary         || result.summary         || profile.summary,
+        workExperiences: result.resumeData?.workExperiences || result.workExperiences || profile.workExperiences,
+        skills:          profile.skills,
+        education:       result.resumeData?.education       || result.education       || profile.education,
+        projects:        result.resumeData?.projects        || result.projects        || profile.projects,
+        certifications:  profile.certifications  || [],
+      };
+      saveMatchRecord(jobDescription, result, mergedResume);
       incrementTailoringUses();
       setCurrentStep(3);
     } catch (err) {

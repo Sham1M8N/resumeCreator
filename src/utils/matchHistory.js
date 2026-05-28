@@ -12,7 +12,8 @@ export const getMatchHistory = () => {
   }
 };
 
-export const saveMatchRecord = (jobDescription, tailoredData) => {
+export const saveMatchRecord = (jobDescription, tailoredData, resumeData) => {
+  const { profilePicture, ...safeResume } = resumeData || {};
   const record = {
     id: Date.now().toString(),
     date: new Date().toISOString(),
@@ -21,6 +22,7 @@ export const saveMatchRecord = (jobDescription, tailoredData) => {
     matchedKeywords: tailoredData.matchedKeywords,
     missingKeywords: tailoredData.missingKeywords,
     suggestions: tailoredData.suggestions || [],
+    resumeData: resumeData ? safeResume : null,
   };
   const existing = getMatchHistory();
   const updated = [record, ...existing].slice(0, MAX_RECORDS);

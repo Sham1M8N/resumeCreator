@@ -9,6 +9,13 @@ const JobAnalysis = ({ analysisData }) => {
 
   const { matchScore = 0, matchedKeywords = [], missingKeywords = [], suggestions = [] } = analysisData;
 
+  const sanitize = (text) =>
+    text
+      .replace(/—/g, ',')
+      .replace(/–/g, ',')
+      .replace(/\s,/g, ',')
+      .trim();
+
   const getScoreClasses = (score) => {
     if (score >= 70) return 'bg-green-100 border-green-300 text-green-800';
     if (score >= 50) return 'bg-yellow-100 border-yellow-300 text-yellow-800';
@@ -68,7 +75,7 @@ const JobAnalysis = ({ analysisData }) => {
                     key={index}
                     className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-300 shadow-sm hover:shadow-md transition"
                   >
-                    {keyword}
+                    {sanitize(keyword)}
                   </span>
                 ))}
               </div>
@@ -93,7 +100,7 @@ const JobAnalysis = ({ analysisData }) => {
                       onMouseLeave={() => setTooltipVisibility(prev => ({ ...prev, [index]: false }))}
                       className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-800 border border-red-300 shadow-sm hover:shadow-md transition cursor-help relative"
                     >
-                      {keyword}
+                      {sanitize(keyword)}
                       <span className="ml-2 text-red-600">ℹ</span>
                     </button>
                     {tooltipVisibility[index] && (
@@ -126,7 +133,7 @@ const JobAnalysis = ({ analysisData }) => {
                 className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg hover:shadow-md transition"
               >
                 <p className="text-gray-800">
-                  <span className="font-semibold text-blue-700">Tip {index + 1}:</span> {suggestion}
+                  <span className="font-semibold text-blue-700">Tip {index + 1}:</span> {sanitize(suggestion)}
                 </p>
               </div>
             ))}

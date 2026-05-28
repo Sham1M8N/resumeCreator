@@ -1,6 +1,24 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 
+const sanitizeATS = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  return text
+    .replace(/—/g, '-')
+    .replace(/–/g, '-')
+    .replace(/‘|’/g, "'")
+    .replace(/“|”/g, '"')
+    .trim();
+};
+
+const formatLinkedIn = (url) => {
+  if (!url) return '';
+  return url
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/\/$/, '');
+};
+
 // Define styles for the PDF
 const styles = StyleSheet.create({
   page: {
@@ -262,7 +280,7 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
 
           {!isMissingField(email) || !isMissingField(phone) || linkedIn || github || location ? (
             <Text style={s.contactInfo}>
-              {[email, phone, linkedIn, github, location].filter(Boolean).join(' | ')}
+              {[email, phone, formatLinkedIn(linkedIn), formatLinkedIn(github), location].filter(Boolean).join(' | ')}
             </Text>
           ) : null}
         </View>
@@ -271,7 +289,7 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
         {summary && (
           <View>
             <Text style={s.sectionHeading}>PROFESSIONAL SUMMARY</Text>
-            <Text style={s.summaryText}>{summary}</Text>
+            <Text style={s.summaryText}>{sanitizeATS(summary)}</Text>
           </View>
         )}
 
@@ -281,8 +299,8 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
             <Text style={s.sectionHeading}>WORK EXPERIENCE</Text>
             {workExperiences.map((exp, index) => (
               <View key={index} style={s.experienceItem}>
-                <Text style={s.jobTitle}>{exp.title || 'Job Title'}</Text>
-                <Text style={s.company}>{exp.company || 'Company Name'}</Text>
+                <Text style={s.jobTitle}>{sanitizeATS(exp.title || 'Job Title')}</Text>
+                <Text style={s.company}>{sanitizeATS(exp.company || 'Company Name')}</Text>
                 <Text style={s.dates}>
                   {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
                 </Text>
@@ -291,7 +309,7 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
                     {exp.bulletPoints.map((bullet, bulletIndex) => (
                       bullet && (
                         <Text key={bulletIndex} style={s.bulletPoint}>
-                          • {bullet}
+                          • {sanitizeATS(bullet)}
                         </Text>
                       )
                     ))}
@@ -307,7 +325,7 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
           <View>
             <Text style={s.sectionHeading}>SKILLS</Text>
             <Text style={s.skillItem}>
-              {skills.filter(sk => sk).join(' • ')}
+              {skills.filter(sk => sk).map(sanitizeATS).join(' • ')}
             </Text>
           </View>
         )}
@@ -319,9 +337,9 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
             {education.map((edu, index) => (
               <View key={index} style={s.educationItem}>
                 <Text style={s.degree}>
-                  {edu.degree} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}
+                  {sanitizeATS(edu.degree)} {edu.fieldOfStudy && `in ${sanitizeATS(edu.fieldOfStudy)}`}
                 </Text>
-                <Text style={s.institution}>{edu.institution}</Text>
+                <Text style={s.institution}>{sanitizeATS(edu.institution)}</Text>
                 {edu.startDate && edu.graduationDate && (
                   <Text style={s.dates}>
                     {formatDate(edu.startDate)} - {formatDate(edu.graduationDate)}
@@ -335,7 +353,7 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
                     {edu.highlights.map((highlight, highlightIndex) => (
                       highlight && (
                         <Text key={highlightIndex} style={s.bulletPoint}>
-                          • {highlight}
+                          • {sanitizeATS(highlight)}
                         </Text>
                       )
                     ))}
@@ -352,15 +370,15 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
             <Text style={s.sectionHeading}>PROJECTS</Text>
             {projects.map((project, index) => (
               <View key={index} style={s.projectItem}>
-                <Text style={s.projectName}>{project.name || 'Project Name'}</Text>
+                <Text style={s.projectName}>{sanitizeATS(project.name || 'Project Name')}</Text>
                 {project.tech && (
                   <Text style={s.tech}>
-                    Tech Stack: {project.tech}
+                    Tech Stack: {sanitizeATS(project.tech)}
                   </Text>
                 )}
                 {project.description && (
                   <Text style={s.projectDescription}>
-                    {project.description}
+                    {sanitizeATS(project.description)}
                   </Text>
                 )}
                 {project.githubUrl && (
@@ -380,7 +398,7 @@ const ResumePDFDocument = ({ resumeData, template = 'classic' }) => {
             <View style={s.skillsContainer}>
               {certifications.filter(cert => cert).map((cert, index) => (
                 <Text key={index} style={s.certificationItem}>
-                  • {cert}
+                  • {sanitizeATS(cert)}
                 </Text>
               ))}
             </View>

@@ -20,7 +20,11 @@ const ShareResumeButton = ({ finalResume }) => {
       <button
         type="button"
         onClick={handleClick}
-        className="px-6 py-3 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors flex items-center gap-2"
+        className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors flex items-center gap-2 ${
+          copied
+            ? 'bg-green-50 border-2 border-green-300 text-green-700'
+            : 'text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50'
+        }`}
       >
         {copied ? (
           'Link Copied!'

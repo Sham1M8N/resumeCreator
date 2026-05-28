@@ -400,20 +400,14 @@ function App() {
                       <ResumePreview resumeData={finalResume} template={selectedTemplate} />
 
                       <div className="max-w-4xl mx-auto mt-6 print:hidden">
-                        <div className="flex justify-between items-center mb-4">
+                        {/* Row 1: navigation + upgrade */}
+                        <div className="flex justify-between items-center mb-3">
                           <button
                             onClick={goToPreviousStep}
-                            className="px-6 py-3 rounded-lg font-semibold text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-colors"
+                            className="px-5 py-2.5 text-sm rounded-lg font-medium text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-colors"
                           >
                             ← Try Another Job
                           </button>
-                          <button
-                            onClick={() => setCoverLetterOpen(true)}
-                            className="px-6 py-3 rounded-lg font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors"
-                          >
-                            ✉ Cover Letter
-                          </button>
-                          <ShareResumeButton finalResume={finalResume} />
                           {!isPaid && (
                             <button
                               onClick={async () => {
@@ -423,11 +417,21 @@ function App() {
                                   setToast({ message: 'Payment failed. Please try again.', type: 'error' });
                                 }
                               }}
-                              className="px-6 py-3 rounded-lg font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+                              className="px-5 py-2.5 text-sm rounded-lg font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors"
                             >
                               ⚡ Upgrade to Pro
                             </button>
                           )}
+                        </div>
+                        {/* Row 2: actions */}
+                        <div className="flex justify-end gap-3 mb-4">
+                          <button
+                            onClick={() => setCoverLetterOpen(true)}
+                            className="px-4 py-2 text-sm rounded-lg font-medium text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-colors"
+                          >
+                            ✉ Cover Letter
+                          </button>
+                          <ShareResumeButton finalResume={finalResume} />
                           <DownloadButton resumeData={finalResume} template={selectedTemplate} />
                         </div>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">

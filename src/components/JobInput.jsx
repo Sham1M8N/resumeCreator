@@ -112,14 +112,19 @@ const JobInput = ({ onSubmit, isPaid = false, matchPreview = null }) => {
       {(() => {
         const remaining = getTailoringRemaining(isPaid);
         const max = isPaid ? 20 : 3;
-        return remaining > 0 ? (
-          <p className="text-xs text-gray-400 text-center mt-2">
-            {remaining} of {max} {isPaid ? 'Pro' : 'free'} tailorings remaining
-          </p>
-        ) : (
-          <p className="text-xs text-red-500 text-center mt-2">
-            No tailorings remaining
-          </p>
+        const pillClass = remaining === 0
+          ? 'bg-red-50 border-red-200 text-red-700'
+          : remaining === 1
+          ? 'bg-amber-50 border-amber-200 text-amber-700'
+          : 'bg-gray-50 border-gray-200 text-gray-600';
+        return (
+          <div className="mt-3 flex justify-center">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${pillClass}`}>
+              {remaining === 0
+                ? 'No tailorings remaining'
+                : `${remaining} of ${max} ${isPaid ? 'Pro' : 'free'} tailorings remaining`}
+            </span>
+          </div>
         );
       })()}
 

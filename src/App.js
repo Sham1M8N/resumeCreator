@@ -499,15 +499,15 @@ function App() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {/* Smart Resume Input Card */}
               <div
                 onClick={() => setShowSmartParser(true)}
-                className="group cursor-pointer bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 border-2 border-transparent hover:border-purple-500 transform hover:-translate-y-2"
+                className="group cursor-pointer bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 border-2 border-transparent hover:border-blue-500 transform hover:-translate-y-2"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-purple-500 transition-colors duration-300">
-                    <svg className="w-10 h-10 text-purple-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-blue-500 transition-colors duration-300">
+                    <svg className="w-10 h-10 text-blue-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
@@ -537,7 +537,7 @@ function App() {
                       Fastest option
                     </div>
                   </div>
-                  <div className="mt-6 px-6 py-2 bg-purple-500 text-white rounded-lg font-semibold group-hover:bg-purple-600 transition-colors duration-300">
+                  <div className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold group-hover:bg-blue-700 transition-colors duration-300">
                     Get Started →
                   </div>
                 </div>
@@ -580,7 +580,7 @@ function App() {
                       Best for beginners
                     </div>
                   </div>
-                  <div className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold group-hover:bg-blue-600 transition-colors duration-300">
+                  <div className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold group-hover:bg-blue-700 transition-colors duration-300">
                     Get Started →
                   </div>
                 </div>
@@ -589,11 +589,11 @@ function App() {
               {profile && (
                 <div
                   onClick={() => setCurrentStep(2)}
-                  className="group cursor-pointer bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 border-2 border-transparent hover:border-green-500 transform hover:-translate-y-2"
+                  className="group cursor-pointer bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 border-2 border-transparent hover:border-blue-500 transform hover:-translate-y-2"
                 >
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-green-500 transition-colors duration-300">
-                      <svg className="w-10 h-10 text-green-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-blue-500 transition-colors duration-300">
+                      <svg className="w-10 h-10 text-blue-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
@@ -623,7 +623,7 @@ function App() {
                         Quickest option
                       </div>
                     </div>
-                    <div className="mt-6 px-6 py-2 bg-green-500 text-white rounded-lg font-semibold group-hover:bg-green-600 transition-colors duration-300">
+                    <div className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold group-hover:bg-blue-700 transition-colors duration-300">
                       Continue →
                     </div>
                   </div>

@@ -238,14 +238,15 @@ const MatchHistoryPanel = ({ isOpen, onClose, isPaid }) => {
         <div className="fixed inset-0 z-60 bg-gray-50 overflow-y-auto">
           {/* Sticky header */}
           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm z-10">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Tailored Resume</p>
-              <p className="text-xs text-gray-400">
+            <div className="flex items-center gap-3">
+              <span className="text-base font-bold text-blue-600">Resume Generator</span>
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 border border-blue-200 text-blue-700">Saved Resume</span>
+              <span className="text-xs text-gray-400">
                 {new Date(viewingResume.date).toLocaleDateString('en-GB', {
                   day: 'numeric', month: 'short', year: 'numeric',
                 })}
-                {' · '}Match score: {viewingResume.matchScore}/100
-              </p>
+                {' · '}Score: {viewingResume.matchScore}/100
+              </span>
             </div>
             <button
               onClick={() => setViewingResume(null)}
